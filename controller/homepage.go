@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"one-api/common/config"
-	"one-api/model"
+	"github.com/songquanpeng/one-api/common/config"
+	"github.com/songquanpeng/one-api/model"
 )
 
 // AnnouncementOption 公告配置结构
