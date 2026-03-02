@@ -29,6 +29,7 @@ import Dashboard from './pages/Dashboard';
 
 const Home = lazy(() => import('./pages/Home'));
 const About = lazy(() => import('./pages/About'));
+const ApiDocs = lazy(() => import('./pages/ApiDocs'));
 
 function App() {
   const [userState, userDispatch] = useContext(UserContext);
@@ -287,6 +288,14 @@ function App() {
         element={
           <Suspense fallback={<Loading></Loading>}>
             <About />
+          </Suspense>
+        }
+      />
+      <Route
+        path='/api-docs'
+        element={
+          <Suspense fallback={<Loading></Loading>}>
+            <ApiDocs />
           </Suspense>
         }
       />

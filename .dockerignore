@@ -1,0 +1,9 @@
+.git
+.github
+web/default/node_modules
+web/default/mock-server.js
+*.md
+!web/default/README.md
+LICENSE
+one-api.service
+pull_request_template.md

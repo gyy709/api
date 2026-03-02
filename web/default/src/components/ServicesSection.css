@@ -1,0 +1,126 @@
+.services-section {
+  padding: 8rem 0;
+  background: #f8f9fb;
+  position: relative;
+}
+
+.services-section .section-title {
+  font-size: 3rem !important;
+  margin-bottom: 1rem !important;
+  color: #1a1a1a !important;
+  font-weight: 800 !important;
+  letter-spacing: -0.5px;
+}
+
+.services-section .ui.container {
+  max-width: 1200px !important;
+}
+
+.services-section .ui.grid {
+  margin-top: 4rem !important;
+}
+
+.service-card {
+  border: 1px solid #e8ecf1 !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  height: 100%;
+  background: white !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.service-card:hover {
+  border-color: #667eea !important;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1) !important;
+  transform: translateY(-4px);
+}
+
+.service-card .content {
+  padding: 2.5rem !important;
+}
+
+.service-card i.icon {
+  color: #667eea !important;
+  margin-bottom: 1.5rem !important;
+  transition: all 0.3s ease;
+  background: rgba(102, 126, 234, 0.1);
+  width: 70px;
+  height: 70px;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.service-card:hover i.icon {
+  transform: scale(1.1);
+  background: rgba(102, 126, 234, 0.15);
+}
+
+.service-title {
+  font-size: 1.4rem !important;
+  margin: 1.5rem 0 1rem !important;
+  color: #1a1a1a !important;
+  font-weight: 700 !important;
+}
+
+.service-description {
+  color: #5a6c7d !important;
+  line-height: 1.7 !important;
+  font-size: 1rem !important;
+  min-height: 60px;
+}
+
+.service-link {
+  margin-top: 1.5rem !important;
+  color: #667eea !important;
+  font-weight: 600 !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.3s ease;
+  text-decoration: none;
+  font-size: 0.95rem;
+}
+
+.service-link::after {
+  content: '→';
+  transition: transform 0.3s ease;
+}
+
+.service-link:hover {
+  color: #5568d3 !important;
+  gap: 0.8rem;
+}
+
+.service-link:hover::after {
+  transform: translateX(5px);
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .services-section {
+    padding: 4rem 1rem;
+  }
+  
+  .services-section .section-title {
+    font-size: 2.2rem !important;
+  }
+  
+  .service-card .content {
+    padding: 2rem !important;
+  }
+  
+  .service-card i.icon {
+    width: 60px;
+    height: 60px;
+  }
+}
+
+@media (max-width: 992px) {
+  .services-section .ui.grid {
+    margin-top: 3rem !important;
+  }
+}

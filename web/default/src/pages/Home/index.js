@@ -1,11 +1,21 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Card, Grid, Header } from 'semantic-ui-react';
+import { Card, Grid, Header, Loader } from 'semantic-ui-react';
 import { API, showError, showNotice, timestamp2string } from '../../helpers';
 import { StatusContext } from '../../context/Status';
 import { marked } from 'marked';
 import { UserContext } from '../../context/User';
-import { Link } from 'react-router-dom';
+import AnnouncementModal from '../../components/AnnouncementModal';
+import HeroSection from '../../components/HeroSection';
+import FeaturesSection from '../../components/FeaturesSection';
+import ServicesSection from '../../components/ServicesSection';
+import TutorialSection from '../../components/TutorialSection';
+
+const STORAGE_KEYS = {
+  ANNOUNCEMENT_CLOSE: 'announcement_close_record',
+  ANNOUNCEMENT_DATA: 'announcement_data',
+  HOMEPAGE_CONFIG: 'homepage_config'
+};
 
 const Home = () => {
   const { t } = useTranslation();
@@ -13,6 +23,130 @@ const Home = () => {
   const [homePageContentLoaded, setHomePageContentLoaded] = useState(false);
   const [homePageContent, setHomePageContent] = useState('');
   const [userState] = useContext(UserContext);
+  
+  // 新增状态
+  const [announcement, setAnnouncement] = useState(null);
+  const [showAnnouncement, setShowAnnouncement] = useState(false);
+  const [homePageConfig, setHomePageConfig] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // 获取关闭记录
+  const getCloseRecord = () => {
+    try {
+      const record = localStorage.getItem(STORAGE_KEYS.ANNOUNCEMENT_CLOSE);
+      return record ? JSON.parse(record) : { closedToday: null, closedPermanently: [] };
+    } catch (error) {
+      return { closedToday: null, closedPermanently: [] };
+    }
+  };
+
+  // 判断是否显示公告
+  const shouldShowAnnouncement = (announcement, closeRecord) => {
+    if (!announcement || !announcement.enabled) {
+      return false;
+    }
+
+    if (!closeRecord) {
+      return true;
+    }
+
+    // 检查永久关闭
+    if (closeRecord.closedPermanently && 
+        closeRecord.closedPermanently.includes(announcement.id)) {
+      return false;
+    }
+
+    // 检查今日关闭
+    if (closeRecord.closedToday) {
+      const now = Date.now();
+      const closedTime = closeRecord.closedToday;
+      const oneDayMs = 24 * 60 * 60 * 1000;
+      
+      if (now - closedTime < oneDayMs) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
+  // 获取公告
+  const fetchAnnouncement = async () => {
+    try {
+      const res = await API.get('/api/announcement');
+      const { success, data } = res.data;
+      
+      if (success && data && data.id) {
+        setAnnouncement(data);
+        const closeRecord = getCloseRecord();
+        setShowAnnouncement(shouldShowAnnouncement(data, closeRecord));
+      }
+    } catch (error) {
+      console.error('获取公告失败:', error);
+    }
+  };
+
+  // 获取首页配置
+  const fetchHomePageConfig = async () => {
+    try {
+      const res = await API.get('/api/homepage_config');
+      const { success, data } = res.data;
+      
+      if (success && data) {
+        setHomePageConfig(data);
+        try {
+          localStorage.setItem(STORAGE_KEYS.HOMEPAGE_CONFIG, JSON.stringify(data));
+        } catch (error) {
+          console.warn('无法缓存首页配置:', error);
+        }
+      }
+    } catch (error) {
+      console.error('获取首页配置失败:', error);
+      // 尝试使用缓存
+      try {
+        const cached = localStorage.getItem(STORAGE_KEYS.HOMEPAGE_CONFIG);
+        if (cached) {
+          setHomePageConfig(JSON.parse(cached));
+        }
+      } catch (e) {
+        console.error('无法读取缓存:', e);
+      }
+    }
+  };
+
+  // 今日关闭
+  const handleCloseToday = () => {
+    try {
+      const closeRecord = getCloseRecord();
+      closeRecord.closedToday = Date.now();
+      localStorage.setItem(STORAGE_KEYS.ANNOUNCEMENT_CLOSE, JSON.stringify(closeRecord));
+      setShowAnnouncement(false);
+    } catch (error) {
+      console.error('保存关闭记录失败:', error);
+      setShowAnnouncement(false);
+    }
+  };
+
+  // 永久关闭
+  const handleClosePermanently = () => {
+    try {
+      const closeRecord = getCloseRecord();
+      
+      if (!closeRecord.closedPermanently) {
+        closeRecord.closedPermanently = [];
+      }
+      
+      if (announcement && !closeRecord.closedPermanently.includes(announcement.id)) {
+        closeRecord.closedPermanently.push(announcement.id);
+      }
+      
+      localStorage.setItem(STORAGE_KEYS.ANNOUNCEMENT_CLOSE, JSON.stringify(closeRecord));
+      setShowAnnouncement(false);
+    } catch (error) {
+      console.error('保存关闭记录失败:', error);
+      setShowAnnouncement(false);
+    }
+  };
 
   const displayNotice = async () => {
     const res = await API.get('/api/notice');
@@ -55,10 +189,48 @@ const Home = () => {
   useEffect(() => {
     displayNotice().then();
     displayHomePageContent().then();
+    fetchAnnouncement().then();
+    fetchHomePageConfig().then(() => {
+      setLoading(false);
+    });
   }, []);
 
+  // 如果正在加载，显示加载器
+  if (loading) {
+    return <Loader active>加载中...</Loader>;
+  }
+
+  // 如果配置为自定义模式且有配置数据，显示新首页
+  if (homePageConfig && homePageConfig.mode === 'custom') {
+    return (
+      <>
+        <AnnouncementModal
+          open={showAnnouncement}
+          onClose={() => setShowAnnouncement(false)}
+          announcement={announcement}
+          onCloseToday={handleCloseToday}
+          onClosePermanently={handleClosePermanently}
+        />
+        
+        <HeroSection config={homePageConfig.hero} />
+        <FeaturesSection features={homePageConfig.features} />
+        <ServicesSection services={homePageConfig.services} />
+        <TutorialSection />
+      </>
+    );
+  }
+
+  // 否则显示原有首页
   return (
     <>
+      <AnnouncementModal
+        open={showAnnouncement}
+        onClose={() => setShowAnnouncement(false)}
+        announcement={announcement}
+        onCloseToday={handleCloseToday}
+        onClosePermanently={handleClosePermanently}
+      />
+      
       {homePageContentLoaded && homePageContent === '' ? (
         <div className='dashboard-container'>
           <Card fluid className='chart-card'>
